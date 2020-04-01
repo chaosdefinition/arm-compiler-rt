@@ -1,7 +1,5 @@
 # Sources that can't be compiled for Thumb processors
 
-arm/aeabi_cdcmp.S
-arm/aeabi_cfcmp.S
 arm/eqdf2vfp.S
 arm/eqsf2vfp.S
 arm/gedf2vfp.S
