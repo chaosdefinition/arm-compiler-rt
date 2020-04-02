@@ -127,12 +127,16 @@ build-dirs-tmpl = $(call get-dirs,$(call objbase-tmpl,$1),$3) $(call libbase-tmp
 # Argument 2: library subdirectory.
 # Argument 3: CPU-specific compiler flags.
 # Argument 4: relative object path(s).
+# Argument 5: CRT object path(s).
 define build-rules
 ifdef CC_CHECK_ERROR
 $(call objpat-tmpl,$1):
 	$$(error $(CC_CHECK_ERROR))
 else
 $(call objpat-tmpl,$1): $(SRCDIR)/%.c | $$$$(@D)
+	$$(call info-cmd,$1,CC)
+	@$(CC) $3 $(CFLAGS) -c $$< -o $$@
+$(call objpat-tmpl,$1): $(CRTDIR)/lib/crt/%.c | $$$$(@D)
 	$$(call info-cmd,$1,CC)
 	@$(CC) $3 $(CFLAGS) -c $$< -o $$@
 $(call objpat-tmpl,$1): $(SRCDIR)/%.S | $$$$(@D)
@@ -144,11 +148,13 @@ $(call lib-tmpl,$2): $(call objs-tmpl,$1,$4) | $$$$(@D)
 	@$(AR) -rc $$@ $$^
 $(call build-dirs-tmpl,$1,$2,$4):
 	@mkdir -p $$@
-$1: $(call lib-tmpl,$2)
+$1: $(call lib-tmpl,$2) copy-crt-$1
+copy-crt-$1: $(call objs-tmpl,$1,$5)
+	@cp $$^ $(call libbase-tmpl,$2)
 clean-$1:
 	rm -rf $(call objbase-tmpl,$1) $(call lib-tmpl,$2)
 all: $1
-.PHONY: $1 clean-$1
+.PHONY: $1 copy-crt-$1 clean-$1
 endef
 
 # To be eval'ed. Expands to build and clean rules for a target group.
@@ -168,7 +174,8 @@ endef
 # Argument 3: CPU-specific compiler flags.
 # Argument 4: source list names.
 # Argument 5: blacklist names.
-add-target = $(eval $(call build-rules,$1,$2,$3,$(call get-objs,$4,$5)))
+# Argument 6: CRT source list names.
+add-target = $(eval $(call build-rules,$1,$2,$3,$(call get-objs,$4,$5),$(call get-objs,$6,)))
 # Adds a new target group.
 # Argument 1: target group name.
 # Argument 2: target names to group.
@@ -209,27 +216,27 @@ distclean: clean
 
 # armv6m: ARMv6-M.
 CPUFLAGS_ARMV6M := $(call target-cflags,armv6-m:thumb)
-$(call add-target,armv6m,armv6-m,$(CPUFLAGS_ARMV6M),generic,thumb)
+$(call add-target,armv6m,armv6-m,$(CPUFLAGS_ARMV6M),generic,thumb,crt)
 
 # armv7m: ARMv7-M.
 CPUFLAGS_ARMV7M := $(call target-cflags,armv7-m:thumb) $(if $(CC_IS_CLANG),,-mfix-cortex-m3-ldrd)
-$(call add-target,armv7m,armv7-m,$(CPUFLAGS_ARMV7M),generic arm,thumb)
+$(call add-target,armv7m,armv7-m,$(CPUFLAGS_ARMV7M),generic arm,thumb,crt)
 
 # armv7em-sf: ARMv7E-M, soft float ABI.
 CPUFLAGS_ARMV7EM_SF := $(call target-cflags,armv7e-m:thumb)
-$(call add-target,armv7em-sf,armv7e-m,$(CPUFLAGS_ARMV7EM_SF),generic arm,thumb)
+$(call add-target,armv7em-sf,armv7e-m,$(CPUFLAGS_ARMV7EM_SF),generic arm,thumb,crt)
 
 # armv7em-hf: ARMv7E-M, hard float ABI, single-precision VFPv4.
 CPUFLAGS_ARMV7EM_HF := $(call target-cflags,armv7e-m:thumb,fpv4-sp-d16)
-$(call add-target,armv7em-hf,armv7e-m/fpu,$(CPUFLAGS_ARMV7EM_HF),generic arm arm-fpu,thumb)
+$(call add-target,armv7em-hf,armv7e-m/fpu,$(CPUFLAGS_ARMV7EM_HF),generic arm arm-fpu,thumb,crt)
 
 # armv7em-hf-v5: ARMv7E-M, hard float ABI, single-precision VFPv5.
 CPUFLAGS_ARMV7EM_HF_V5 := $(call target-cflags,armv7e-m:thumb,fpv5-sp-d16)
-$(call add-target,armv7em-hf-v5,armv7e-m/fpu-v5,$(CPUFLAGS_ARMV7EM_HF_V5),generic arm arm-fpu,thumb)
+$(call add-target,armv7em-hf-v5,armv7e-m/fpu-v5,$(CPUFLAGS_ARMV7EM_HF_V5),generic arm arm-fpu,thumb,crt)
 
 # armv7em-hf-dp: ARMv7E-M, hard float ABI, double-precision VFPv5.
 CPUFLAGS_ARMV7EM_HF_DP := $(call target-cflags,armv7e-m:thumb,fpv5-d16)
-$(call add-target,armv7em-hf-dp,armv7e-m/fpu-dp,$(CPUFLAGS_ARMV7EM_HF_DP),generic arm arm-fpu arm-fpu-dp,thumb)
+$(call add-target,armv7em-hf-dp,armv7e-m/fpu-dp,$(CPUFLAGS_ARMV7EM_HF_DP),generic arm arm-fpu arm-fpu-dp,thumb,crt)
 
 # armv7em: group of all ARMv7E-M targets.
 $(call add-group,armv7em,armv7em-sf armv7em-hf armv7em-hf-v5 armv7em-hf-dp,armv7e-m)
