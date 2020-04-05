@@ -110,7 +110,7 @@ objpat-tmpl = $(call objbase-tmpl,$1)/%.o
 objs-tmpl = $(addprefix $(call objbase-tmpl,$1)/,$2)
 # Library output file for the specified library subdirectory.
 # Argument 1: subdirectory.
-lib-tmpl = $(call libbase-tmpl,$1)/$(TARGET).a
+lib-tmpl = $(call libbase-tmpl,$1)/$(TARGET)-arm.a
 # All directories required for the build.
 # Argument 1: CPU target name.
 # Argument 2: library subdirectory.
