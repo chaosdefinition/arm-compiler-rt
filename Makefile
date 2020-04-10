@@ -51,7 +51,7 @@ INCDIRS := include
 # redefining. Silence those macro-redefined warnings, too.
 CFLAGS := \
 	-std=gnu99 -fPIC -fno-builtin -fvisibility=hidden -fomit-frame-pointer \
-	-ffreestanding -flto -O3 \
+	-ffreestanding -flto=thin -O3 \
 	$(if $(CC_IS_CLANG),-Wno-unknown-attributes -Wno-macro-redefined) \
 	$(foreach d,$(INCDIRS),-I$d)
 
